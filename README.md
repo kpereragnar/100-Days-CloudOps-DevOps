@@ -21,4 +21,5 @@ My 100-day journey into CloudOps, DevOps, AWS, Azure and cloud infrastructure.
 
 - [Day 01](journal/Day-01.md)
 - [Day 02](journal/Day-02.md)
-
+- [Day 03](journal/Day-03.md)
+- [Day 03](journal/Day-04.md)
