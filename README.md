@@ -15,11 +15,13 @@ My 100-day journey into CloudOps, DevOps, AWS, Azure and cloud infrastructure.
 |---|---|---|
 | 01 | 13 Sep 2026 | ✅ Completed |
 | 02 | 14 Sep 2026 | ✅ Completed |
-| 03 | 15 Sep 2026 | ⏳ Upcoming |
+| 03 | 15 Sep 2026 | ✅ Completed |
+| 04 | 16 Sep 2026 | ✅ Completed |
+| 05 | 17 Sep 2026 | ⏳ Upcoming |
 
 ## Journal
 
 - [Day 01](journal/Day-01.md)
 - [Day 02](journal/Day-02.md)
 - [Day 03](journal/Day-03.md)
-- [Day 03](journal/Day-04.md)
+- [Day 04](journal/Day-04.md)
