@@ -1,5 +1,3 @@
-Day 7 is actually a strong entry because you moved beyond simply completing the KodeKloud task and used the personal AWS work to reinforce the concepts. I’d document it like this:
-
 ````markdown
 # CloudOps / DevOps Journal
 
