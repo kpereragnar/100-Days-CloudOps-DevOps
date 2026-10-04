@@ -1,3 +1,5 @@
+
+
 # 100 Days CloudOps & DevOps Challenge
 
 My 100-day journey into CloudOps, DevOps, AWS, Azure and cloud infrastructure.
@@ -27,9 +29,16 @@ My 100-day journey into CloudOps, DevOps, AWS, Azure and cloud infrastructure.
 | 12 | 24 Sep 2026 | ✅ Completed |
 | 13 | 25 Sep 2026 | ✅ Completed |
 | 14 | 26 Sep 2026 | ✅ Completed |
+| 15 | 27 Sep 2026 | ✅ Completed |
+| 16 | 28 Sep 2026 | ✅ Completed |
+| 17 | 29 Sep 2026 | ✅ Completed |
+| 18 | 30 Sep 2026 | ✅ Completed |
+| 19 | 01 Oct 2026 | ✅ Completed |
+| 20 | 02 Oct 2026 | ✅ Completed |
+| 21 | 03 Oct 2026 | ✅ Completed |
 
 
-| 15 | 27 Sep 2026 | ⏳ Upcoming |
+| 22 | 04 Oct 2026 | ⏳ Upcoming |
 
 ## Journal
 
