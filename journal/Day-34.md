@@ -78,26 +78,19 @@ git tag
 
 ### Key Learning
 
-**`post-update` is a server-side hook, not a local hook.** It lives in the **bare repo** that receives the push, not in your working repo. This is the thing that trips people up — the hook isn't in `.git/hooks/` on the developer's machine, it's in `hooks/` on the server side.
+**`post-update` is a server-side hook, not a local hook.** It lives in the **bare repo** that receives the push — not in the working repo's `.git/hooks/` directory. This is the trap.
 
-**Server-side hooks receive the updated refs as arguments.** That's why the hook uses:
+**Server-side hooks receive the updated refs as arguments.** That's why the hook loops over `"$@"` — the list of refs that were pushed. The check `if [ "$ref" = "refs/heads/master" ]` ensures the tag is only created when master was actually updated.
 
-```bash
-for ref in "$@"; do
-  if [ "$ref" = "refs/heads/master" ]; then
-```
+**`git tag -f` is the safe form.** If the hook fires twice on the same day, the tag already exists. Without `-f`, the second push fails. With `-f`, the tag re-points to the newest commit.
 
-`$@` expands to the full paths of every ref that was pushed in this operation. The loop ensures the tag is only created when **master** was actually updated.
+**`date +%Y-%m-%d` produces the exact format the task requires.** No underscores, no slashes. `2026-10-16` → `release-2026-10-16`.
 
-**`git tag -f` is the safe form.** If the hook fires twice on the same day (two pushes), the tag already exists. Without `-f`, the second push fails with "tag already exists" and the hook errors. With `-f`, the tag just re-points to the newest commit.
-
-**`date +%Y-%m-%d` produces the exact format the task requires.** No underscores, no slashes. `2026-10-16`, matching `release-2026-10-16`.
-
-**The `remote:` prefix in the push output confirms the hook ran on the server.** That's the signal the hook fired — not something on the client side.
+**The `remote:` prefix confirms the hook ran on the server side.**
 
 **The hook must be executable.** `chmod +x hooks/post-update` — without it, Git silently skips it.
 
-**The bare repo path matters.** If the origin is a remote URL (GitHub, Gitea), you can't create a hook there. The task must provide a local bare repo as origin. Always check with `git remote -v` first.
+**The bare repo path matters.** If the origin is a remote URL (GitHub, Gitea), you can't create a hook there. Always check with `git remote -v` first.
 
 ---
 
@@ -133,7 +126,7 @@ cd /tmp
 zip function.zip lambda_function.py
 ```
 
-**Step 3 — Checked the role:**
+**Step 3 — Checked the role existed:**
 
 ```bash
 aws iam get-role --role-name lambda_execution_role
@@ -141,16 +134,12 @@ aws iam get-role --role-name lambda_execution_role
 
 Role existed from a previous task — no need to recreate.
 
-**Step 4 — Retrieved the role ARN:**
+**Step 4 — Retrieved the ARN and created the Lambda:**
 
 ```bash
 ROLE_ARN=$(aws iam get-role --role-name lambda_execution_role \
   --query "Role.Arn" --output text)
-```
 
-**Step 5 — Created the Lambda:**
-
-```bash
 aws lambda create-function \
   --function-name datacenter-lambda-cli \
   --runtime python3.12 \
@@ -159,7 +148,7 @@ aws lambda create-function \
   --zip-file fileb:///tmp/function.zip
 ```
 
-**Step 6 — Waited for Active:**
+**Step 5 — Waited for Active:**
 
 ```bash
 for i in {1..20}; do
@@ -171,7 +160,7 @@ for i in {1..20}; do
 done
 ```
 
-**Step 7 — Invoked:**
+**Step 6 — Invoked:**
 
 ```bash
 aws lambda invoke \
@@ -189,75 +178,66 @@ Output:
 
 ### Issues I Faced and How I Fixed Them
 
-**Issue 1 — Working around the AWS CLI v1 payload problem**
+**Issue 1 — AWS CLI v1 payload limitation**
 
-I remembered from Day 33 that `--cli-binary-format` doesn't exist in v1 and that `--payload 'e30='` fails on v1. The fix: omit `--payload` entirely. The function ignores `event`, so an empty event works fine.
+Knew from Day 33 that `--cli-binary-format` doesn't exist in v1 and `--payload 'e30='` fails on v1. Fixed by omitting `--payload` entirely.
 
-**Fix:** Just don't pass a payload.
+**Issue 2 — Function was Pending after creation**
 
-```bash
-aws lambda invoke --function-name datacenter-lambda-cli /tmp/response.json
-```
-
-**Issue 2 — Waiting for Active state**
-
-Right after `create-function`, the state was `Pending`. Invoking during `Pending` fails with `ResourceConflictException`.
-
-**Fix:** Poll in a loop until the state is `Active` — 5 to 15 seconds typically.
+Invoking a function in `Pending` state fails with `ResourceConflictException`. Fixed by polling until `Active`.
 
 ### Key Learning
 
-**Lambda deployment is a three-piece pattern.**
+**Lambda deployment is a three-piece pattern.** Code + zip + role. Miss any one and it fails.
 
-| Piece | Command |
-|---|---|
-| Code | Write `lambda_function.py` |
-| Package | `zip function.zip lambda_function.py` |
-| Function | `aws lambda create-function --zip-file fileb://...` |
+**`fileb://` vs `file://`.** Zip is binary — `fileb://`. Text files use `file://`.
 
-Miss any one and the deploy fails.
+**The handler is `file.function`.** `lambda_function.lambda_handler` = file `lambda_function.py`, function `lambda_handler`.
 
-**`fileb://` vs `file://` matters.**
+**The role must exist before the function.** Lambda assumes it at runtime.
 
-- `file://` — text files (JSON, trust policies)
-- `fileb://` — binary files (zip, images)
+**Omit `--payload` on v1 CLI.** Sidesteps the base64 vs raw JSON mess.
 
-The Lambda zip is binary. Use `fileb://`. Without it, the CLI tries to read the zip as text and fails.
-
-**The handler must match the file and function names.**
-
-```
-handler = "lambda_function.lambda_handler"
-           ^^^^^^^^^^^^^^ ^^^^^^^^^^^^^
-           file name      function name
-```
-
-`lambda_function.py` contains `lambda_handler`. If the file were `app.py` and the function were `main`, the handler would be `app.main`.
-
-**The role must exist before the function.**
-
-Lambda assumes the execution role when running the function. If the role doesn't exist, `create-function` fails with `InvalidParameterValueException`.
-
-**AWS CLI v1 vs v2 — the payload trap I already knew from Day 33.** The trick is: **omit the payload entirely** and both versions handle the invocation correctly.
-
-**Two status codes mean different things.**
-
-| Code | Meaning |
-|---|---|
-| `StatusCode: 200` (invoke output) | The invocation succeeded |
-| `statusCode: 200` (inside response.json) | The function's return value |
-
-The task cares about the **second one** — what the function returns.
+**Two status codes mean different things.** Outer `StatusCode: 200` = invocation succeeded. Inner `statusCode: 200` = what the function returned. The task cares about the inner one.
 
 ---
 
-## 3. Personal Task — Terraform
+## 3. Personal Tasks — Terraform
 
-### Task: Kinesis Stream + Reference Sheet Expansion
+### Task 1: DynamoDB Table
 
-Today's personal work covered the Kinesis data stream task and a comprehensive rewrite of the Terraform reference sheet to close gaps.
+```hcl
+resource "aws_dynamodb_table" "devops_users" {
+  name         = "devops-users"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "devops_id"
 
-**Task — Kinesis stream:**
+  attribute {
+    name = "devops_id"
+    type = "S"
+  }
+
+  tags = {
+    Name = "devops-users"
+  }
+}
+```
+
+**Issues:** Started with three wrong argument names:
+
+| Wrote | Correct |
+|---|---|
+| `key_schema = "devops_id"` | `hash_key = "devops_id"` + `attribute {}` block |
+| `mode = "PAY_PER_REQUEST"` | `billing_mode = "PAY_PER_REQUEST"` |
+| (missing) | `attribute { name = "devops_id" type = "S" }` |
+
+**Learning:** Terraform uses a **shortcut** for the key schema. The CLI's `--key-schema` flag becomes Terraform's `hash_key`/`range_key` attributes. The `attribute {}` block declares the key's **type** (S=String, N=Number, B=Binary). One block per key. Both are mandatory.
+
+**Why no `--mode`:** The CLI flag `--billing-mode` maps to Terraform's `billing_mode`. There is no `mode` argument on `aws_dynamodb_table`.
+
+---
+
+### Task 2: Kinesis Stream
 
 ```hcl
 resource "aws_kinesis_stream" "nautilus_stream" {
@@ -274,7 +254,26 @@ resource "aws_kinesis_stream" "nautilus_stream" {
 }
 ```
 
-Verified with:
+**Learning:** Two required arguments for a basic stream — `name` and `shard_count`. The `stream_mode_details` block sets PROVISIONED vs ON_DEMAND.
+
+| Mode | Shard count | Use case |
+|---|---|---|
+| `PROVISIONED` | Required | Predictable throughput |
+| `ON_DEMAND` | Not allowed | Unpredictable traffic |
+
+**For ON_DEMAND:**
+
+```hcl
+resource "aws_kinesis_stream" "stream" {
+  name = "nautilus-stream"
+
+  stream_mode_details {
+    stream_mode = "ON_DEMAND"
+  }
+}
+```
+
+**Verified with:**
 
 ```bash
 aws kinesis describe-stream-summary \
@@ -283,47 +282,68 @@ aws kinesis describe-stream-summary \
   --region us-east-1
 ```
 
-### Key Learning
+**Why Kinesis was missing from the sheet:** The sheet's Serverless & Messaging section only had Lambda, SNS, SQS, and EventBridge. Kinesis wasn't in there. Today's task exposed the gap.
 
-**Kinesis was missing from the Terraform sheet.** The task exposed a gap — the sheet had no `aws_kinesis_stream` reference, no CLI translation table, and no skeleton. Fixed by adding:
+---
 
-- Kinesis stream to the resource lookup (6.3)
-- Full skeleton with both PROVISIONED and ON_DEMAND modes (6.4)
-- CLI → Terraform translation table (6.7.2)
-- Exceptions: `--stream-name` → `name`, `--retention-period-hours` → `retention_period` (6.7.3)
+### Task 3: SNS Topic
 
-**The sheet needed a bigger rewrite.** The Kinesis gap revealed a broader issue: the sheet covered maybe 60% of the AWS services in the 100 Days tasks. Added skeletons, tables, and exceptions for:
+```hcl
+resource "aws_sns_topic" "datacenter_alerts" {
+  name         = "datacenter-alerts"
+  display_name = "DataCenter Alerts"
 
-Kinesis, Kinesis Firehose, KMS (key + alias), Secrets Manager, SSM Parameter, CloudFront, API Gateway (REST + HTTP), EventBridge, Step Functions, EFS, ECS (cluster + task + service), EKS (cluster + node group), CloudTrail, AWS Config, GuardDuty, Security Hub, Glue, Athena, OpenSearch, Backup.
+  tags = {
+    Name = "datacenter-alerts"
+  }
+}
+```
 
-**The sheet also had structural issues.** Fixed:
+**Learning:** SNS topics are simple — `name` is the only required argument. Optional ones worth knowing:
 
-| Issue | Fix |
+| Argument | Purpose |
 |---|---|
-| Section 20 duplicated 6.7.1 | Deleted Section 20 |
-| Provisioners and Lifecycle were after Modules/Workspaces | Moved them before — they're part of resource config |
-| 6.4 showed minimal skeletons | Expanded to include commonly used arguments per resource |
-| Data source section was thin | Added `data "aws_instance"`, `data "aws_security_group"`, `data "aws_subnets"`, etc. |
-| Troubleshooting table missing CLI/Terraform mismatch errors | Added `Unsupported argument` and `InvalidParameterValue` rows |
+| `display_name` | Human-readable name shown in SMS/email |
+| `policy` | Access policy (JSON) |
+| `delivery_policy` | Retry/backoff rules |
+| `fifo_topic` | Enables FIFO mode |
+| `content_based_deduplication` | Required for FIFO |
+| `kms_master_key_id` | Server-side encryption |
+| `tags` | Resource tags |
 
-**The sheet is now chronological:** Setup → Author (building blocks → organization patterns) → Execute → Manage/Recover → Reference. Section 6.3 tells you the resource name. Section 6.4 gives you the skeleton. Section 6.7 translates the CLI. Section 14 lists the errors you'll hit.
+**To subscribe an endpoint (email, SQS, Lambda, etc.):**
 
-**The workbook now covers the full 100 Days surface area.** Not just the 15 services hit so far — the 60+ services likely to appear in the remaining days. This was the day the sheet became interview-ready.
+```hcl
+resource "aws_sns_topic_subscription" "email" {
+  topic_arn = aws_sns_topic.datacenter_alerts.arn
+  protocol  = "email"
+  endpoint  = "ops@example.com"
+}
+```
+
+**Verified with:**
+
+```bash
+aws sns list-topics \
+  --endpoint-url=http://aws:4566 \
+  --region us-east-1
+```
 
 ---
 
 ## Key Takeaways
 
-- 🪝 **Server-side hooks live in the bare repo, not the working repo.** `post-update` must be in `/path/to/repo.git/hooks/` — not `.git/hooks/`.
-- 🏷️ **`git tag -f` prevents hook failures on repeated pushes.** If the hook fires twice on the same day, `-f` re-points the tag instead of erroring.
-- 📅 **Date format is exact.** `date +%Y-%m-%d` produces `release-2026-10-16`. No underscores, no slashes, no dashes missing.
-- 🐍 **Lambda deployment is code + zip + role.** Three pieces. Miss any one and the deploy fails.
-- 📦 **`fileb://` for binary, `file://` for text.** The Lambda zip is binary.
-- 🎯 **The handler is `file.function`.** `lambda_function.lambda_handler` = file `lambda_function.py`, function `lambda_handler`.
-- ⏳ **Wait for `Active` before invoking.** Right after `create-function`, the state is `Pending`.
-- 💡 **Omit `--payload` on v1 CLI.** Sidesteps the base64 vs raw JSON mess entirely.
-- 📊 **Kinesis has two modes:** PROVISIONED (you set shard count) or ON_DEMAND (auto-scaled). Provisioned requires `shard_count`; on-demand doesn't.
-- 📖 **The reference sheet is a living document.** Every new task can expose gaps. Today's task closed 40+ gaps in one pass.
+- 🪝 **Server-side hooks live in the bare repo, not the working repo.** `post-update` goes in `/path/to/repo.git/hooks/`.
+- 🏷️ **`git tag -f` prevents hook failures on repeated pushes.** Re-points the tag instead of erroring.
+- 📅 **Date format is exact.** `date +%Y-%m-%d` → `release-2026-10-16`.
+- 🐍 **Lambda deploy is code + zip + role.** Three pieces, always.
+- 📦 **`fileb://` for binary, `file://` for text.** Zip is binary.
+- ⏳ **Wait for Lambda `Active` before invoking.** Right after create, it's `Pending`.
+- 💡 **Omit `--payload` on v1 CLI.** Sidesteps base64 vs raw JSON.
+- 🔑 **DynamoDB uses `hash_key`, not `key_schema`.** Plus an `attribute {}` block for the key type.
+- 📊 **Kinesis requires `shard_count` when PROVISIONED.** ON_DEMAND omits it.
+- 📢 **SNS topics only need `name`.** Everything else is optional.
+- 📖 **The reference sheet is a living document.** Today's tasks revealed missing entries for DynamoDB, Kinesis, and SNS — all three now added.
 
 ---
 
@@ -333,12 +353,13 @@ Kinesis, Kinesis Firehose, KMS (key + alias), Secrets Manager, SSM Parameter, Cl
 | ---------------------------------------- | ------------ |
 | 100 Days DevOps — Git post-update hook   | 🟢 Completed |
 | 100 Days Cloud — Lambda + IAM role       | 🟢 Completed |
-| Personal — Terraform Kinesis stream      | 🟢 Completed |
-| Personal — Terraform sheet rewrite       | 🟢 Completed |
+| Personal — DynamoDB table                | 🟢 Completed |
+| Personal — Kinesis stream                | 🟢 Completed |
+| Personal — SNS topic                     | 🟢 Completed |
 | Git (server-side hooks, tagging)         | 🟢 Learned   |
 | AWS (Lambda deploy, zip, handler)        | 🟢 Reinforced |
-| Terraform (Kinesis + 40 service gaps)    | 🟢 Completed |
+| Terraform (DynamoDB, Kinesis, SNS)       | 🟢 Completed |
 
 **Overall: 🟢 Day 34/100 — Completed**
 
-> **Major realization:** Today was about **closing gaps**. The Kinesis task exposed that the Terraform sheet was incomplete. That wasn't a problem — it was data. The sheet now covers the full surface area of the 100 Days challenge, not just the services hit so far. And the Lambda task exposed the same principle in a different form: what you learn on Day 33 (CLI v1 payload limitations) becomes an asset on Day 34. The pattern is consistent — **every task either reinforces what you already know or reveals a gap worth closing.** The sheet is no longer a cheat sheet; it's a working reference that grows with each task. That's what separates a study guide from a tool.
+> **Major realization:** Three Terraform resources, three different shapes. DynamoDB hides complexity behind shortcut arguments (`hash_key` instead of `key_schema`). Kinesis has two modes with different required arguments. SNS is almost minimal — just `name`. The pattern across all three: **the resource name tells you what to build, the CLI translation tells you the argument names, and the registry tells you what's required.** Each task exposed a service missing from the reference sheet. All three are now added — the sheet is a working tool, not a static document.
