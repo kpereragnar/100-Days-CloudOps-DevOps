@@ -50,9 +50,17 @@ My 100-day journey into CloudOps, DevOps, AWS, Azure and cloud infrastructure.
 | 33 | 15 Oct 2026 | ✅ Completed |
 | 34 | 16 Oct 2026 | ✅ Completed |
 | 35 | 17 Oct 2026 | ✅ Completed |
+| 36 | 18 Oct 2026 | ✅ Completed |
+| 37 | 19 Oct 2026 | ✅ Completed |
+| 38 | 20 Oct 2026 | ✅ Completed |
+| 39 | 21 Oct 2026 | ✅ Completed |
+| 40 | 22 Oct 2026 | ✅ Completed |
+| 41 | 23 Oct 2026 | ✅ Completed |
+| 42 | 24 Oct 2026 | ✅ Completed |
 
 
-| 36 | 18 Oct 2026 | ⏳ Upcoming |
+
+| 43 | 25 Oct 2026 | ⏳ Upcoming |
 
 ## Journal
 
