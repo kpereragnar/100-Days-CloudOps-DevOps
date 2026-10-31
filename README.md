@@ -2,14 +2,13 @@
 
 # 100 Days CloudOps & DevOps Challenge
 
-My 100-day journey into CloudOps, DevOps, AWS, Azure and cloud infrastructure.
+My 100-day journey into CloudOps, DevOps, AWS, and cloud infrastructure.
 
 ## Challenges
 
 - KodeKloud 100 Days of DevOps
 - KodeKloud 100 Days of Cloud
 - AWS
-- Microsoft Azure
 
 ## Progress
 
@@ -57,10 +56,15 @@ My 100-day journey into CloudOps, DevOps, AWS, Azure and cloud infrastructure.
 | 40 | 22 Oct 2026 | ✅ Completed |
 | 41 | 23 Oct 2026 | ✅ Completed |
 | 42 | 24 Oct 2026 | ✅ Completed |
+| 43 | 25 Oct 2026 | ✅ Completed |
+| 44 | 26 Oct 2026 | ✅ Completed |
+| 45 | 27 Oct 2026 | ✅ Completed |
+| 46 | 28 Oct 2026 | ✅ Completed |
+| 47 | 29 Oct 2026 | ✅ Completed |
+| 48 | 30 Oct 2026 | ✅ Completed |
+| 49 | 31 Oct 2026 | ✅ Completed |
 
-
-
-| 43 | 25 Oct 2026 | ⏳ Upcoming |
+| 50 | 25 Oct 2026 | ⏳ Upcoming |
 
 ## Journal
 
@@ -106,9 +110,17 @@ My 100-day journey into CloudOps, DevOps, AWS, Azure and cloud infrastructure.
 - [Day 40](journal/Day-40.md)
 - [Day 41](journal/Day-41.md)
 - [Day 42](journal/Day-42.md)
+- [Day 43](journal/Day-42.md)
+- [Day 44](journal/Day-43.md)
+- [Day 45](journal/Day-45.md)
+- [Day 46](journal/Day-46.md)
+- [Day 47](journal/Day-47.md)
+- [Day 48](journal/Day-48.md)
+- [Day 49](journal/Day-49.md)
 - [Weekly Recap](journal/Weekly-Recap-Days1to7.md)
 - [Weekly Recap](journal/Weekly-Recap-Days8to14.md)
 - [Weekly Recap](journal/Weekly-Recap-Days15to21.md)
 - [Weekly Recap](journal/Weekly-Recap-Days22to28.md)
 - [Weekly Recap](journal/Weekly-Recap-Days29to35.md)
 - [Weekly Recap](journal/Weekly-Recap-Days36to42.md)
+- [Weekly Recap](journal/Weekly-Recap-Days43to49.md)
