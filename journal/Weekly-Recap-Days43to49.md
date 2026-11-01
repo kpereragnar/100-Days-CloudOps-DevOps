@@ -7,11 +7,11 @@
 
 ## 🗓️ Week 7: Days 43–49
 
-> **Week 7 closed Terraform L1 at 75%, opened L2, and produced the journal's single worst debugging chain — five cascading failures from one missing `EOF`, ending in `Runtime.ImportModuleError`.** The plan absorbed two interruptions (an AFIT day, a 12-hour Bincom assessment) without moving a single downstream milestone.
+> **Week 7 closed Terraform L1 at 75%, opened L2, and produced the journal's single worst debugging chain — five cascading failures from one missing `EOF`, ending in `Runtime.ImportModuleError`.** It also produced a substantial infrastructure engineering deliverable: a Terraform-based, two-tier AWS architecture for the Bincom recruitment assessment, with automated web/database provisioning, SSM access, IAM and CloudWatch integration. The plan absorbed two interruptions (an AFIT day and a 12-hour Bincom assessment) without moving a single downstream milestone.
 
-Covered: **Docker macvlan, `docker commit`, container port immutability, Docker Compose (httpd, php+mariadb), Dockerfile context paths; DynamoDB table schema, EKS private endpoint + Auto Mode, NAT Gateway, Launch Template + ASG + ALB + target tracking, Lambda + S3 + DynamoDB event-driven copy, CloudFormation Lambda; Terraform `-replace`, `count`, EIP association, IAM role/policy/user, VPC+subnet, private VPC+EC2, S3 with ACL chain.**
+Covered: **Docker macvlan, `docker commit`, container port immutability, Docker Compose (httpd, php+mariadb), Dockerfile context paths; DynamoDB table schema, EKS private endpoint + Auto Mode, NAT Gateway, Launch Template + ASG + ALB + target tracking, Lambda + S3 + DynamoDB event-driven copy, CloudFormation Lambda; Terraform `-replace`, `count`, EIP association, IAM role/policy/user, VPC+subnet, private VPC+EC2, S3 with ACL chain; Bincom assessment — Terraform architecture for a two-tier AWS deployment, Ubuntu 24.04 EC2, Apache/PHP, MariaDB, IAM, SSM, CloudWatch, Bash user-data automation and Git hygiene.**
 
-> 🔑 **Theme of the week:** the tool's vocabulary is narrower than the assumption of it. Every failure named the exact shape the tool wanted — the fix was one word or one character away.
+> 🔑 **Theme of the week:** the tool's vocabulary is narrower than the assumption of it. Every failure named the exact shape the tool wanted — the fix was one word or one character away. At project scale, the same principle becomes decision quality: every infrastructure component needs to be reasoned through before deployment, not merely written.
 
 ---
 
@@ -23,9 +23,9 @@ Covered: **Docker macvlan, `docker commit`, container port immutability, Docker 
 | **44** | nginx container `ecommerce` (missing `-p` → recreate) | EKS `xfusion-eks` private endpoint (Auto Mode 3-part, role missing) | IAM user variable, IAM role variable (missing `assume_role_policy`, then 3 trust-policy bugs) |
 | **45** | httpd via Compose (`container_name` ≠ service name) | Launch Template + ASG + ALB (ScaleInCooldown, UserData base64) | 🏆 **Terraform L1 Assessment — 75%, 105/110 min** |
 | **46** | Dockerfile fix (context-relative paths) | NAT Gateway for private EC2 (new RT, not main) | **L2 Task 1** (VPC+subnet `depends_on`), **Task 2** (private VPC+EC2, 6 errors) |
-| **47** | Compose php_web + mysql_web (MYSQL_ROOT_PASSWORD) | Lambda + S3 + DynamoDB copy — **5 failures, 1 root cause** | ⏸️ **Not attempted** (AFIT day) |
+| **47** | Compose php_web + mysql_web (`MYSQL_ROOT_PASSWORD`) | Lambda + S3 + DynamoDB copy — **5 failures, 1 root cause** | ⏸️ **Not attempted** (AFIT day) |
 | **48** | — | — | **3-task recovery sprint:** `-replace`, `count` (6 errors), EIP association |
-| **49** | **First K8 pod** `pod-httpd` | Lambda via CloudFormation (ZipFile inline, ManagedPolicyArns) | ⏸️ Paused — **Bincom assessment: 12h write, not yet run** |
+| **49** | **First K8 pod** `pod-httpd` | Lambda via CloudFormation (`ZipFile` inline, `ManagedPolicyArns`); **Bincom assessment — designed two-tier AWS infrastructure and automated server configuration** | ⏸️ Paused — **Bincom assessment: 12h write, infrastructure code validated, not yet applied** |
 
 ---
 
@@ -50,11 +50,17 @@ Covered: **Docker macvlan, `docker commit`, container port immutability, Docker 
 
 **Resource blocks unchanged.** `aws_vpc`, `aws_instance`, `aws_eip` — same primitives. **What changed is organization.** L1 tested whether you could write a resource; L2 tests whether you can structure a project.
 
-### 3. The plan absorbed two interruptions without moving a milestone
+The Bincom assessment extended this structural discipline beyond the labs. Instead of putting everything in one Terraform file, I organised the infrastructure into separate files for providers, variables, networking, security groups, EC2, IAM, CloudWatch and outputs. I also separated the server bootstrap scripts and monitoring configurations from the Terraform resources.
+
+The project therefore became an opportunity to apply the organisational lessons from Terraform L2 to a larger, real-world-style infrastructure design.
+
+### 3. The plan absorbed two interruptions without moving the finish line
 
 **Day 47's AFIT day** — Terraform missed. Day 48's 3-task sprint recovered it. **Finish Nov 12 unchanged, coins unchanged.** **Day 49's Bincom assessment** — 12 hours of writing, no Terraform task. **K8 L1 takes over from Nov 1, Terraform resumes Nov 8. Both land Nov 22.**
 
 **Same pattern as Day 42's power outage.** The plan has slack because the "2/day through X" windows are adjustable. **The only thing that moves the finish line is a dependency break, and neither interruption caused one.**
+
+The Bincom assessment also created a different kind of interruption: it required moving beyond short lab exercises into a larger infrastructure design with multiple interconnected AWS services, configuration decisions and documentation requirements.
 
 ---
 
@@ -66,7 +72,44 @@ Covered: **Docker macvlan, `docker commit`, container port immutability, Docker 
 
 **Day 46 L2 Task 2 — 6 errors on first independent attempt.** `aws_ec2` → `aws_instance`. Missing `vpc_id` on subnet. `assign_ipv4_address_on_creation` → `map_public_ip_on_launch`. Bare output assignments. Unquoted type. Missing SG. **All same error classes as the whole week.** The plan caught every one.
 
-**Day 49 Bincom — 12 hours writing, not yet run.** Full PrestaShop on AWS. 8 `.tf` files, 2 user-data scripts, 2 CloudWatch agent configs. VPC, two t3.micro Ubuntu 24.04, IMDSv2, SSM instead of SSH, IAM instance profile, CloudWatch log groups. **Validated: `terraform fmt`, `validate`, `plan` (15 resources), `bash -n`, `json.tool`. Nothing applied.** The code is the artifact; the deployment is proof.
+**Day 49 Bincom — 12 hours writing, infrastructure code prepared and validated, deployment still pending.**
+
+This was a different challenge from the KodeKloud labs. The assessment required a publicly accessible PrestaShop deployment on AWS, with the web server and database server separated and the solution designed around Free Tier constraints.
+
+I approached it as an infrastructure engineering project rather than a collection of manual console operations.
+
+The work included:
+
+- **Terraform infrastructure:** 8 configuration files covering AWS providers, variables, VPC, security groups, EC2, IAM, CloudWatch and outputs.
+- **Networking:** custom VPC (`10.0.0.0/16`), public subnet (`10.0.1.0/24`), Internet Gateway and public route table.
+- **Compute:** two Ubuntu 24.04 EC2 instances using `t3.micro` and 8 GB encrypted gp3 root volumes — one for Apache/PHP and another for MariaDB.
+- **Security:** separate security groups, no public SSH access, MariaDB restricted to the web server's security group, and IMDSv2 enforcement.
+- **Access management:** IAM instance profile with `AmazonSSMManagedInstanceCore`, allowing Session Manager access without depending on a fixed public IP.
+- **Monitoring:** CloudWatch Agent configuration for Apache logs, MariaDB error logs, memory utilisation and disk utilisation, with separate log groups and seven-day retention.
+- **Automation:** two Bash user-data scripts for automated web and database server configuration.
+- **Web presentation:** a custom responsive KPERE RAGNAR portfolio landing page intended to appear when the web server's public IP is opened.
+- **Credential management:** Terraform variables for database and PrestaShop administrator credentials, with sensitive variables and local `terraform.tfvars` excluded from Git.
+- **Repository hygiene:** dedicated `internships/bincom/prestashop-aws-deployment/` directory and a recursive root-level `.gitignore`.
+
+The initial infrastructure validation was successful:
+
+```bash
+terraform fmt
+terraform validate
+terraform plan
+```
+
+The execution plan showed:
+
+```text
+Plan: 15 to add, 0 to change, 0 to destroy.
+```
+
+Additional static checks were performed on the Bash scripts using `bash -n` and on the CloudWatch JSON configurations using `python3 -m json.tool`.
+
+The review also identified important corrections before deployment: installing `curl` on the database server, applying PHP configuration to both Apache and CLI, and explicitly ordering IAM policy and CloudWatch log-group dependencies before EC2 launch.
+
+**The important distinction: nothing was applied to AWS yet.** The Terraform plan and configuration checks are evidence of preparation and static validation, not proof of a live deployment. The next milestone is provisioning, verifying the portfolio through the public IP, confirming database connectivity and SSM access, and completing the PrestaShop installation.
 
 ---
 
@@ -76,11 +119,17 @@ Covered: **Docker macvlan, `docker commit`, container port immutability, Docker 
 |---|---|
 | **Docker** | macvlan network, `commit` vs `tag`, port immutability, Compose `container_name`, multi-service stacks, context-relative COPY |
 | **AWS** | DynamoDB schema, EKS private endpoint + Auto Mode, NAT Gateway chain, Launch Template + ASG + ALB, Lambda + S3 + DynamoDB, CloudFormation Lambda |
-| **Terraform** | `-replace`, `count`, `[*]` splat, EIP association, `terraform.tfvars` + `outputs.tf`, IAM role/policy trust policies |
+| **Terraform** | `-replace`, `count`, `[*]` splat, EIP association, `terraform.tfvars` + `outputs.tf`, IAM role/policy trust policies, multi-file infrastructure organisation, resource dependencies |
+| **AWS Networking** | VPC, subnet, Internet Gateway, route tables, security-group references, public and private IP distinctions |
+| **Linux & Server Administration** | Ubuntu 24.04 provisioning, Apache, PHP extensions, MariaDB, systemd service management, file permissions |
+| **Bash Automation** | User-data scripts, package installation, IMDSv2 token retrieval, service verification, heredocs and log redirection |
+| **AWS Security** | IAM instance profiles, SSM Session Manager, IMDSv2 enforcement, database network isolation, credential handling |
+| **CloudWatch** | Agent installation, custom metrics, log groups, log streams, retention configuration |
 | **Debugging** | Diagnostic ladder for silent failures, log-vs-CLI separation, JSON validation before use |
 | **CloudFormation** | `ZipFile` inline, `ManagedPolicyArns` vs inline `Policies`, `CAPABILITY_NAMED_IAM`, `!GetAtt` dependencies |
 | **K8s** | First pod — labels, containers, `kubectl describe` |
-| **IaC discipline** | 12-hour write, validated statically, not yet deployed |
+| **IaC discipline** | Multi-file Terraform project, variable separation, outputs, dependency management, static validation and execution-plan review |
+| **Git** | Repository organisation, recursive `.gitignore`, Terraform state and credential protection |
 
 ---
 
@@ -103,7 +152,7 @@ Covered: **Docker macvlan, `docker commit`, container port immutability, Docker 
 
 ## 🎓 Five Lessons That Stuck
 
-1. **The tool's vocabulary is narrower than your assumption of it.** `aws_ec2` → `aws_instance`. `assign_ipv4_address_on_creation` → `map_public_ip_on_launch`. `lambda-function.py` → `lambda_function.py`. `domain = "vpc"` not `vpc = true`. **Each is a one-word fix after an error that named the exact gap.**
+1. **The tool's vocabulary is narrower than your assumption of it.** `aws_ec2` → `aws_instance`. `assign_ipv4_address_on_creation` → `map_public_ip_on_launch`. `lambda-function.py` → `lambda_function.py`. **Each is a one-word fix after an error that named the exact gap.**
 
 2. **Silent failures are the dangerous ones.** ECS `Running: 0` with empty events for 90 seconds. Lambda `storedBytes: 0` on the log stream. Empty `$ROLE_ARN` producing a completely different error. **The command that doesn't error is the one that costs hours.**
 
@@ -125,6 +174,11 @@ Covered: **Docker macvlan, `docker commit`, container port immutability, Docker 
 | 100 Days tasks | 13 (DevOps 7 + Cloud 6) |
 | Certifications earned | 1 (Terraform L1) |
 | Documents written | 1 (Bincom assessment — 12h, ~1,800 lines) |
+| Infrastructure project | 1 (Bincom PrestaShop AWS deployment — code prepared, not applied) |
+| Terraform configuration files | 8 |
+| AWS resources in planned deployment | 15 |
+| Server bootstrap scripts | 2 |
+| CloudWatch agent configurations | 2 |
 | Interruptions absorbed | 2 (AFIT day, Bincom day) |
 | Plan changes | 2 (coin model, K8 first) |
 | Debugging chains resolved | 2 (Lambda 5-failure chain, L2 Task 2 6-error chain) |
@@ -137,8 +191,9 @@ Covered: **Docker macvlan, `docker commit`, container port immutability, Docker 
 - 🐳 **K8 L1 at 2/day from Nov 1** — 14 tasks, finish Nov 7
 - 🔧 **Terraform L2 resumes Nov 8 at 1/day free** — 15 tasks remaining, finish Nov 22
 - ☁️ **100 Days K8 block continues** — Days 50–56 are all K8
-- 🏗️ **Bincom assessment deploy** — the code is written; the deployment is the proof
-- 📝 **Daily journal** — 3 L2 tasks, 1 K8 task, 1 journal entry minimum per day
+- 🏗️ **Bincom assessment deployment** — review and apply the Terraform configuration, verify the two EC2 instances, test the portfolio through the public IP, establish database connectivity, and complete the PrestaShop installation.
+- 📸 **Deployment evidence** — capture AWS Console screenshots, Terraform outputs, service status, CloudWatch logs and the live application.
+- 📝 **Daily journal** — 3 L2 tasks, 1 K8 task, 1 journal entry minimum per day.
 
 ---
 
@@ -148,9 +203,15 @@ Covered: **Docker macvlan, `docker commit`, container port immutability, Docker 
 >
 > Ten single-resource Terraform questions took 105 minutes because the loop ran ten times. **The loops didn't stop when the plan succeeded — they continued when the describe showed something unexpected, when the output name was lowercase, when the CIDR was off by a mask.** Every "pass" in the assessment was a loop that terminated cleanly; every miss was a loop that terminated on the wrong assumption.
 >
-> The Bincom assessment is the same lesson at a different scale. **Twelve hours of writing that hasn't run yet is twelve hours of decisions that can't be validated by reality.** The VPC, the 11 PHP extensions, the CloudWatch configs, the SSM choice — every one is a decision that has to be reasoned through, not tested. **The `terraform plan` is the closest thing to validation the project gets until it runs.** And that's the difference from the labs: **in the labs, the tool tells you what's missing in seconds. In the project, you have to be the tool.**
+> The Bincom assessment is the same lesson at a different scale. **Twelve hours of infrastructure design and configuration that hasn't run yet is twelve hours of decisions that can't be validated by reality.** The VPC, the two EC2 instances, the PHP extensions, the CloudWatch configurations, the IAM permissions, the SSM choice and the database network restrictions — every one is a decision that has to be reasoned through, not merely written.
 >
-> **Same shape across the week:** the plan absorbs interruptions without moving the finish line; the loop runs until the describe agrees with the write; the tool's rule is narrower than the assumption of it. **Three expressions of one discipline.** Day 45's assessment, Day 46's L2 Task 2, Day 47's Lambda chain, Day 48's recovery sprint, Day 49's 12-hour write — **all five are the loop, at different scopes.** That's the week's real output: not the certification, not the projects, but the reflex that keeps the loop running until the state matches the intent.
+> **The `terraform plan` is the closest thing to validation the project gets until it runs.** It confirms that Terraform can interpret the configuration and construct a proposed set of changes. It does not prove that the instances will initialise correctly, that Apache will serve the portfolio, that MariaDB will accept connections from the web server, or that CloudWatch will receive its logs.
+>
+> And that's the difference from the labs: **in the labs, the tool tells you what's missing in seconds. In the project, you have to be the tool.**
+>
+> **Same shape across the week:** the plan absorbs interruptions without moving the finish line; the loop runs until the describe agrees with the write; the tool's rule is narrower than the assumption of it. **Three expressions of one discipline.** Day 45's assessment, Day 46's L2 Task 2, Day 47's Lambda chain, Day 48's recovery sprint, Day 49's 12-hour infrastructure project — **all five are the loop, at different scopes.**
+>
+> That's the week's real output: not just the certification, not just the project files, but the reflex to keep validating assumptions until the actual system state matches the intended design.
 
 ---
 
@@ -160,5 +221,6 @@ Covered: **Docker macvlan, `docker commit`, container port immutability, Docker 
 
 **Terraform L1 Certified · L2 at 5/20 · K8 block entered**
 
-</div>
+**Bincom AWS Infrastructure — Designed and Validated · Deployment Pending**
 
+</div>
