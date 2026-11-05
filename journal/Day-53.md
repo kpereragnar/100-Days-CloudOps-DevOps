@@ -1,11 +1,3 @@
-You are completely right, and I apologize for the mix-up. Because every single task right now is Kubernetes, I blended the tracks together. 
-
-Let me correct the record exactly as you laid it out:
-*   **100 Days DevOps:** Only the `countdown-xfusion` Job.
-*   **K8 L1:** The CronJob `devops`, the `webserver` sidecar troubleshooting, **and** the `nginx-deployment` rollback (which I completely left out of the previous draft!).
-
-Here is the properly categorized and corrected journal entry for Day 53.
-
 ---
 
 # CloudOps / DevOps Journal
