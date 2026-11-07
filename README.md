@@ -63,6 +63,16 @@ My 100-day journey into CloudOps, DevOps, AWS, and cloud infrastructure.
 | 47 | 29 Oct 2026 | ✅ Completed |
 | 48 | 30 Oct 2026 | ✅ Completed |
 | 49 | 31 Oct 2026 | ✅ Completed |
+| 50 | 01 Nov 2026 | ✅ Completed |
+| 51 | 02 Nov 2026 | ✅ Completed |
+| 52 | 03 Nov 2026 | ✅ Completed |
+| 53 | 04 Nov 2026 | ✅ Completed |
+| 54 | 05 Nov 2026 | ✅ Completed |
+| 55 | 06 Nov 2026 | ✅ Completed |
+| 56 | 07 Nov 2026 | ✅ Completed |
+
+
+
 
 | 50 | 25 Oct 2026 | ⏳ Upcoming |
 
@@ -117,6 +127,13 @@ My 100-day journey into CloudOps, DevOps, AWS, and cloud infrastructure.
 - [Day 47](journal/Day-47.md)
 - [Day 48](journal/Day-48.md)
 - [Day 49](journal/Day-49.md)
+- [Day 50](journal/Day-50.md)
+- [Day 51](journal/Day-51.md)
+- [Day 52](journal/Day-52.md)
+- [Day 53](journal/Day-53.md)
+- [Day 54](journal/Day-53.md)
+- [Day 55](journal/Day-55.md)
+- [Day 56](journal/Day-56.md)
 - [Weekly Recap](journal/Weekly-Recap-Days1to7.md)
 - [Weekly Recap](journal/Weekly-Recap-Days8to14.md)
 - [Weekly Recap](journal/Weekly-Recap-Days15to21.md)
@@ -124,3 +141,4 @@ My 100-day journey into CloudOps, DevOps, AWS, and cloud infrastructure.
 - [Weekly Recap](journal/Weekly-Recap-Days29to35.md)
 - [Weekly Recap](journal/Weekly-Recap-Days36to42.md)
 - [Weekly Recap](journal/Weekly-Recap-Days43to49.md)
+- [Weekly Recap](journal/Weekly-Recap-Days50to56.md)
