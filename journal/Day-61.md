@@ -1,6 +1,6 @@
 # CloudOps / DevOps Journal
 
-## Day 61 — 13 November 2026
+## Day 61 — 12 November 2026
 
 **Challenges:** K8 L2 (Storage & Troubleshooting)
 
